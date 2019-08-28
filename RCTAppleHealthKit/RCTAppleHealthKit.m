@@ -34,6 +34,11 @@ RCT_EXPORT_METHOD(isAvailable:(RCTResponseSenderBlock)callback)
     [self isHealthKitAvailable:callback];
 }
 
+RCT_EXPORT_METHOD(authStatus:(NSArray *)domains callback:(RCTResponseSenderBlock)callback)
+{
+    [self authorizationStatus:domains callback:callback];
+}
+
 RCT_EXPORT_METHOD(initHealthKit:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback)
 {
     [self initializeHealthKit:input callback:callback];
@@ -235,6 +240,33 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
     callback(@[[NSNull null], @(isAvailable)]);
 }
 
+- (void)authorizationStatus:(NSArray *)domains callback:(RCTResponseSenderBlock)callback
+{
+    NSMutableArray *domainObjects = [[NSMutableArray alloc] init];
+    if([domains containsObject:@"WORKOUTS"]) {
+        [domainObjects addObject:[HKSampleType workoutType]];
+    }
+    if([domains containsObject:@"MEALS"]) {
+        [domainObjects addObject:HKQuantityTypeIdentifierDietaryFiber];
+    }
+    if([domains containsObject:@"WEIGHT"]) {
+        callback(@[[NSNull null], domains]);
+        [domainObjects addObject:HKQuantityTypeIdentifierBodyMass];
+    }
+    
+    NSMutableArray *authStatuses = [[NSMutableArray alloc] init];
+    for(HKObjectType *domain in domainObjects) {
+        [authStatuses addObject:@([self.healthStore authorizationStatusForType:domain])];
+    }
+    
+    if([authStatuses containsObject:@(HKAuthorizationStatusSharingDenied)]) {
+        callback(@[[NSNull null], @"DENIED"]);
+    } else if ([authStatuses containsObject:@(HKAuthorizationStatusNotDetermined)]) {
+        callback(@[[NSNull null], @"UNKNOWN"]);
+    } else {
+        callback(@[[NSNull null], @"AUTHORIZED"]);
+    }
+}
 
 - (void)initializeHealthKit:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback
 {
