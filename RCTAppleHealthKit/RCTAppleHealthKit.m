@@ -250,7 +250,6 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
         [domainObjects addObject:HKQuantityTypeIdentifierDietaryFiber];
     }
     if([domains containsObject:@"WEIGHT"]) {
-        callback(@[[NSNull null], domains]);
         [domainObjects addObject:HKQuantityTypeIdentifierBodyMass];
     }
     
