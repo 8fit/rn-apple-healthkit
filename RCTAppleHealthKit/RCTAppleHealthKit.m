@@ -242,11 +242,11 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
 
 - (void)authorizationStatus:(NSArray *)domains callback:(RCTResponseSenderBlock)callback
 {
-    NSSet *domainObjects = [self getWritePermsFromOptions: domains];
+    NSSet *permissionObjects = [self getWritePermsFromOptions: permissionNames];
     
     NSMutableArray *authStatuses = [[NSMutableArray alloc] init];
-    for(HKObjectType *domain in domainObjects) {
-        [authStatuses addObject:@([self.healthStore authorizationStatusForType:domain])];
+    for(HKObjectType *permission in permissionObjects) {
+        [authStatuses addObject:@([self.healthStore authorizationStatusForType:permission])];
     }
     
     if([authStatuses containsObject:@(HKAuthorizationStatusSharingDenied)]) {
