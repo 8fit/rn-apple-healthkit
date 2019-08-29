@@ -242,16 +242,7 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
 
 - (void)authorizationStatus:(NSArray *)domains callback:(RCTResponseSenderBlock)callback
 {
-    NSMutableArray *domainObjects = [[NSMutableArray alloc] init];
-    if([domains containsObject:@"WORKOUTS"]) {
-        [domainObjects addObject:[HKSampleType workoutType]];
-    }
-    if([domains containsObject:@"MEALS"]) {
-        [domainObjects addObject:HKQuantityTypeIdentifierDietaryFiber];
-    }
-    if([domains containsObject:@"WEIGHT"]) {
-        [domainObjects addObject:HKQuantityTypeIdentifierBodyMass];
-    }
+    NSSet *domainObjects = [self getWritePermsFromOptions: domains];
     
     NSMutableArray *authStatuses = [[NSMutableArray alloc] init];
     for(HKObjectType *domain in domainObjects) {
