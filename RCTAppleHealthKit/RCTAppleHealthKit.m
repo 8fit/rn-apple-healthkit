@@ -34,6 +34,11 @@ RCT_EXPORT_METHOD(isAvailable:(RCTResponseSenderBlock)callback)
     [self isHealthKitAvailable:callback];
 }
 
+RCT_EXPORT_METHOD(openSettings)
+{
+    [self openHealthKitSettings];
+}
+
 RCT_EXPORT_METHOD(reportMeal:(NSDictionary *)input resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
     [self reportHealthKitMeal:input resolver:resolve rejecter:reject];
@@ -326,6 +331,15 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
     } else {
         callback(@[RCTMakeError(@"HealthKit data is not available", nil, nil)]);
     }
+}
+
+- (void)openHealthKitSettings {
+    dispatch_async(dispatch_get_main_queue(), ^(void){
+        NSURL *privacySettingsUrl = [NSURL URLWithString:@"App-Prefs"];
+        // Note: On iOS 11 this will just open the settings app without navigating to Privacy.
+        // https://stackoverflow.com/questions/46253781/ios-11-url-scheme-for-specific-settings-section-stopped-working
+        [[UIApplication sharedApplication] openURL:privacySettingsUrl];
+    });
 }
 
 - (void)getModuleInfo:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback
