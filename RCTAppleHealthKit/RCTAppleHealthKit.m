@@ -245,6 +245,10 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
     if ([permissionNames count] == 0) {
         reject(@"no_permission_provided", @"[HealthKit][authorizationStatus] please provide permission names", [NSNull null]);
     }
+    if (!self.healthStore) {
+        // When healthStore is not initialized, the function always returns UNKNOWN and we want to avoid that.
+        self.healthStore = [[HKHealthStore alloc] init];
+    }
     
     NSSet *permissionObjects = [self getWritePermsFromOptions: permissionNames];
     
@@ -264,7 +268,9 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
 
 - (void)initializeHealthKit:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback
 {
-    self.healthStore = [[HKHealthStore alloc] init];
+    if (!self.healthStore) {
+        self.healthStore = [[HKHealthStore alloc] init];
+    }
 
     if ([HKHealthStore isHealthDataAvailable]) {
         NSSet *writeDataTypes;
