@@ -19,7 +19,7 @@
 @property BOOL isSync;
 
 - (void)isHealthKitAvailable:(RCTResponseSenderBlock)callback;
-- (void)authorizationStatus:(RCTResponseSenderBlock)callback;
+- (void)authorizationStatus:(NSArray *)permissionNames callback:(RCTResponseSenderBlock)callback;
 - (void)initializeHealthKit:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback;
 - (void)checkPermission:(NSString *)input callback:(RCTResponseSenderBlock)callback;
 - (void)getModuleInfo:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback;
