@@ -34,9 +34,9 @@ RCT_EXPORT_METHOD(isAvailable:(RCTResponseSenderBlock)callback)
     [self isHealthKitAvailable:callback];
 }
 
-RCT_EXPORT_METHOD(authStatus:(NSArray *)permissionNames callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(authStatus:(NSArray *)permissionNames resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 {
-    [self authorizationStatus:permissionNames callback:callback];
+    [self authorizationStatus:permissionNames resolver:resolve rejecter:reject];
 }
 
 RCT_EXPORT_METHOD(initHealthKit:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback)
@@ -240,8 +240,12 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
     callback(@[[NSNull null], @(isAvailable)]);
 }
 
-- (void)authorizationStatus:(NSArray *)domains callback:(RCTResponseSenderBlock)callback
+- (void)authorizationStatus:(NSArray *)permissionNames resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
 {
+    if ([permissionNames count] == 0) {
+        reject(@"no_permission_provided", @"[HealthKit][authorizationStatus] please provide permission names", [NSNull null]);
+    }
+    
     NSSet *permissionObjects = [self getWritePermsFromOptions: permissionNames];
     
     NSMutableArray *authStatuses = [[NSMutableArray alloc] init];
@@ -250,11 +254,11 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
     }
     
     if([authStatuses containsObject:@(HKAuthorizationStatusSharingDenied)]) {
-        callback(@[[NSNull null], @"DENIED"]);
+        resolve(@"DENIED");
     } else if ([authStatuses containsObject:@(HKAuthorizationStatusNotDetermined)]) {
-        callback(@[[NSNull null], @"UNKNOWN"]);
+        resolve(@"UNKNOWN");
     } else {
-        callback(@[[NSNull null], @"AUTHORIZED"]);
+        resolve(@"AUTHORIZED");
     }
 }
 
