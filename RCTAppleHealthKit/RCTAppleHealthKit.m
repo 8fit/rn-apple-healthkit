@@ -34,9 +34,9 @@ RCT_EXPORT_METHOD(isAvailable:(RCTResponseSenderBlock)callback)
     [self isHealthKitAvailable:callback];
 }
 
-RCT_EXPORT_METHOD(authStatus:(NSArray *)domains callback:(RCTResponseSenderBlock)callback)
+RCT_EXPORT_METHOD(authStatus:(NSArray *)permissionNames callback:(RCTResponseSenderBlock)callback)
 {
-    [self authorizationStatus:domains callback:callback];
+    [self authorizationStatus:permissionNames callback:callback];
 }
 
 RCT_EXPORT_METHOD(initHealthKit:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback)
