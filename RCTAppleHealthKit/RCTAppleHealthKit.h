@@ -23,5 +23,7 @@
 - (void)initializeHealthKit:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback;
 - (void)checkPermission:(NSString *)input callback:(RCTResponseSenderBlock)callback;
 - (void)getModuleInfo:(NSDictionary *)input callback:(RCTResponseSenderBlock)callback;
+- (void)reportHealthKitMeal:(NSDictionary *)input resolver:(id)resolve rejecter:(id)reject;
+- (void)deleteHealthKitMeal:(NSString *)mealId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 
 @end
