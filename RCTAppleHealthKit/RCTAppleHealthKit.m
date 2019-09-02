@@ -335,7 +335,7 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
 
 - (void)openHealthKitSettings {
     dispatch_async(dispatch_get_main_queue(), ^(void){
-        NSURL *privacySettingsUrl = [NSURL URLWithString:@"App-Prefs"];
+        NSURL *privacySettingsUrl = [NSURL URLWithString:@"App-Prefs:"];
         // Note: On iOS 11 this will just open the settings app without navigating to Privacy.
         // https://stackoverflow.com/questions/46253781/ios-11-url-scheme-for-specific-settings-section-stopped-working
         [[UIApplication sharedApplication] openURL:privacySettingsUrl];
@@ -358,8 +358,13 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
 {
     NSString *id = [input objectForKey:@"id"];
     NSString *name = [input objectForKey:@"name"];
-    NSString *dateTimeString = [input objectForKey:@"dateTime"];
     NSString *type = [input objectForKey:@"type"];
+    
+    if (!id || !name || !type) {
+        reject(@"healthkit_error", @"invalid data provided", nil);
+    }
+    
+    NSString *dateTimeString = [input objectForKey:@"dateTime"];
     int energy = [[input valueForKey:@"energy"] integerValue];
     NSDictionary *macros = [input objectForKey:@"macros"];
     int fat = [[macros valueForKey:@"macros"] integerValue];
@@ -371,42 +376,40 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.dateFormat = @"yyyy-MM-dd'T'HH:mm:ss.SSS";
     NSDate *mealDate = [dateFormatter dateFromString:dateTimeString];
+    NSDictionary *metadata = @{
+                               @"mealId": id,
+                               @"recipe" : name,
+                               @"type": type
+                               };
+    HKQuantitySample *fatSample = [self createMealSample:fat unit:[HKUnit gramUnit] typeIdentifier:HKQuantityTypeIdentifierDietaryFatTotal mealDate:mealDate meatadata:metadata];
+    HKQuantitySample *fiberSample = [self createMealSample:fiber unit:[HKUnit gramUnit] typeIdentifier:HKQuantityTypeIdentifierDietaryFiber mealDate:mealDate meatadata:metadata];
+    HKQuantitySample *sugarSample = [self createMealSample:sugar unit:[HKUnit gramUnit] typeIdentifier:HKQuantityTypeIdentifierDietarySugar mealDate:mealDate meatadata:metadata];
+    HKQuantitySample *carbsSample = [self createMealSample:carbs unit:[HKUnit gramUnit] typeIdentifier:HKQuantityTypeIdentifierDietaryCarbohydrates mealDate:mealDate meatadata:metadata];
+    HKQuantitySample *proteinSample = [self createMealSample:protein unit:[HKUnit gramUnit] typeIdentifier:HKQuantityTypeIdentifierDietaryProtein mealDate:mealDate meatadata:metadata];
+    HKQuantitySample *energySample = [self createMealSample:energy unit:[HKUnit kilocalorieUnit] typeIdentifier:HKQuantityTypeIdentifierDietaryEnergyConsumed mealDate:mealDate meatadata:metadata];
     
-    NSDictionary *metadata = [[NSDictionary alloc] initWithObjectsAndKeys:id, @"mealId", name, @"recipe", type, @"type", nil];
+    NSArray<HKQuantitySample *> *mealSamples = @[fatSample, fiberSample, sugarSample, carbsSample, proteinSample, energySample];
     
-    HKQuantityType *fatType = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDietaryFatTotal];
-    HKQuantity *fatQuantity = [HKQuantity quantityWithUnit:[HKUnit gramUnit] doubleValue:fat];
-    HKQuantitySample *fatSample = [HKQuantitySample quantitySampleWithType:fatType quantity:fatQuantity startDate:mealDate endDate:mealDate metadata:metadata];
-    
-    HKQuantityType *fiberType = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDietaryFiber];
-    HKQuantity *fiberQuantity = [HKQuantity quantityWithUnit:[HKUnit gramUnit] doubleValue:fiber];
-    HKQuantitySample *fiberSample = [HKQuantitySample quantitySampleWithType:fiberType quantity:fiberQuantity startDate:mealDate endDate:mealDate metadata:metadata];
-    
-    HKQuantityType *sugarType = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDietarySugar];
-    HKQuantity *sugarQuantity = [HKQuantity quantityWithUnit:[HKUnit gramUnit] doubleValue:sugar];
-    HKQuantitySample *sugarSample = [HKQuantitySample quantitySampleWithType:sugarType quantity:sugarQuantity startDate:mealDate endDate:mealDate metadata:metadata];
-    
-    HKQuantityType *carbsType = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDietaryCarbohydrates];
-    HKQuantity *carbsQuantity = [HKQuantity quantityWithUnit:[HKUnit gramUnit] doubleValue:carbs];
-    HKQuantitySample *carbsSample = [HKQuantitySample quantitySampleWithType:carbsType quantity:carbsQuantity startDate:mealDate endDate:mealDate metadata:metadata];
-    
-    HKQuantityType *proteinType = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDietaryProtein];
-    HKQuantity *proteinQuantity = [HKQuantity quantityWithUnit:[HKUnit gramUnit] doubleValue:protein];
-    HKQuantitySample *proteinSample = [HKQuantitySample quantitySampleWithType:proteinType quantity:proteinQuantity startDate:mealDate endDate:mealDate metadata:metadata];
-    
-    HKQuantityType *energyType = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDietaryEnergyConsumed];
-    HKQuantity *energyQuantity = [HKQuantity quantityWithUnit:[HKUnit kilocalorieUnit] doubleValue:energy];
-    HKQuantitySample *energySample = [HKQuantitySample quantitySampleWithType:energyType quantity:energyQuantity startDate:mealDate endDate:mealDate metadata:metadata];
-    
-    NSArray *mealSamples = @[fatSample, fiberSample, sugarSample, carbsSample, proteinSample, energySample];
+    if ([mealSamples count] == 0) {
+        reject(@"healthkit_error", @"no meal samples provided", nil);
+    }
     
     [self.healthStore saveObjects:mealSamples withCompletion:^(BOOL success, NSError * _Nullable error) {
         if (success) {
-            resolve([NSNull null]);
+            resolve(nil);
         } else {
             reject(@"healthkit_error", @"failed to save", error);
         }
     }];
+}
+
+- (HKQuantitySample *)createMealSample:(int )quantity unit:(HKUnit *)unit typeIdentifier:(HKQuantityTypeIdentifier )typeIdentifier mealDate:(NSDate *)mealDate meatadata:(NSDictionary *)metadata
+{
+    HKQuantityType *type = [HKQuantityType quantityTypeForIdentifier:typeIdentifier];
+    HKQuantity *hkQuantity = [HKQuantity quantityWithUnit:unit doubleValue:quantity];
+    HKQuantitySample *mealSample = [HKQuantitySample quantitySampleWithType:type quantity:hkQuantity startDate:mealDate endDate:mealDate metadata:metadata];
+    
+    return mealSample;
 }
 
 -(void)deleteHealthKitMeal:(NSString *)mealId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject
@@ -420,19 +423,19 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
                                                        HKQuantityTypeIdentifierDietaryEnergyConsumed
                                                        ];
     
-    NSError *failure;
+    __block NSError *failure;
     for (HKQuantityTypeIdentifier identifier in identifiers) {
         HKQuantityType *type = [HKQuantityType quantityTypeForIdentifier:identifier];
-        NSPredicate *predicate = [HKQuery predicateForObjectsWithMetadataKey:@"mealId"];
+        NSPredicate *predicate = [HKQuery predicateForObjectsWithMetadataKey:@"mealId" allowedValues:@[mealId]];
         HKSampleQuery *query = [[HKSampleQuery alloc] initWithSampleType:type predicate:predicate limit:HKObjectQueryNoLimit sortDescriptors:nil resultsHandler:^(HKSampleQuery * _Nonnull query, NSArray<__kindof HKSample *> * _Nullable results, NSError * _Nullable error) {
             if (error) {
-                __block failure = error;
+                failure = error;
             }
             
             if (results) {
                 [self.healthStore deleteObjects:results withCompletion:^(BOOL success, NSError * _Nullable error) {
                     if (error) {
-                        __block failure = error;
+                        failure = error;
                     }
                 }];
             }
@@ -444,7 +447,7 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
     if (failure) {
         reject(@"healthkit_error", @"failed to delete meal data", failure);
     } else {
-        resolve([NSNull null]);
+        resolve(nil);
     }
 }
 
