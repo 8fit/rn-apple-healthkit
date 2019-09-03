@@ -359,14 +359,14 @@ RCT_EXPORT_METHOD(saveMindfulSession:(NSDictionary *)input callback:(RCTResponse
     NSString *id = [input objectForKey:@"id"];
     NSString *name = [input objectForKey:@"name"];
     NSString *type = [input objectForKey:@"type"];
+    NSDictionary *macros = [input objectForKey:@"macros"];
     
-    if (!id || !name || !type) {
+    if (!id || !name || !type || !macros) {
         reject(@"healthkit_error", @"invalid data provided", nil);
     }
     
     NSString *dateTimeString = [input objectForKey:@"dateTime"];
     int energy = [[input valueForKey:@"energy"] integerValue];
-    NSDictionary *macros = [input objectForKey:@"macros"];
     int fat = [[macros valueForKey:@"macros"] integerValue];
     int fiber = [[macros valueForKey:@"fiber"] integerValue];
     int sugar = [[macros valueForKey:@"sugar"] integerValue];
